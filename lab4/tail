@@ -1,27 +1,68 @@
 #!/usr/bin/perl
-if($ARGV[0] =~/^-[0-9]*r$/){
-$rev=1;
-$i=1;
+if($ARGV[0] =~/^-([0-9]*[^0-9r]+|[0-9]*r.+)/){
+print "tail: usage -[n][r] [file] \n";
+exit;
 }
-if($ARGV[0]=~/^-[0-9]+$/){$n=-$ARGV[0]; $i=1;}else{$n=10;$i=0;}
-
+if($ARGV[0]=~/^-[0-9]+r?$/){
+$n=$ARGV[0]; 
+$n=~s/\D//g;
+$i=1;
+}else{
+$n=10;
+$i=0;}
+if($ARGV[0]=~/^-[0-9]*r$/){
+$rev=1;
+}
+my @out;
 for($i;$i<scalar(@ARGV);$i++){
-open (FILE,"< $ARGV[$i]");
-print $rev ;
+if($ARGV[$i] eq "-"){$file=STDIN;
 $k=0;
+while(<STDIN>){
+$out[$k]=$_;
+$k++;
+}
+if($rev){
+$x=($k>$n)? $k-$n:0;
+for($j=$k-1;$j>=$x;$j--){print $out[$j];}
+}else{
+$x=($k>$n)? $k-$n:0;
+for($j=$x;$j<$k;$j++){print $out[$j];}
+}
+}
+else
+{
+open (FILE,"< $ARGV[$i]")
+or er($ARGV[$i]);
+
 print "\n==> $ARGV[$i] <==\n";
+$k=0;
+
 while (<FILE>){
 $k++;
 }
+
 seek(FILE,0,0);
-if($k<$n){while(<FILE>){print;}
-}else{
 $j=0;
 while (<FILE>){
-if($j >= $k-$n){print;}
+if($j >= $k-$n){
+if($rev){
+$out[$k-$j-1]=$_;
+}else{
+print;
+}}
 $j++;
 }
+
+if($rev){
+for($j=0;$j<scalar(@out);$j++){
+print $out[$j];
+}
+}
+close (FILE);}
 }
 
-close (FILE);
+sub er
+{
+	print " $ARGV[$i]: can't open input\n";
+next;
 }
